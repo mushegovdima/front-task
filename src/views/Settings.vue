@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { store } from '@/store'
+import NumberField from '@/shared/components/NumberField.vue'
+import { useSettingsStore } from '@/store/settings'
+import { storeToRefs } from 'pinia'
 
-function updateMinimumAge(value: string) {
-  store.minimumAgeInMonths = Number(value) || 0
+const settings = useSettingsStore()
+const { minimumAgeInMonths } = storeToRefs(settings)
+
+function updateMinimumAge(value: number | undefined) {
+  settings.setMinimumAge(value ?? 0)
 }
 </script>
 
@@ -13,20 +18,13 @@ function updateMinimumAge(value: string) {
     <h1 class="text-xl font-bold text-gray-700">Settings</h1>
 
     <div>
-      <label for="min-age-input" class="block text-sm font-bold tracking-wide text-gray-700">
-        MINIMUM AGE
-      </label>
-      <div class="flex items-center gap-2">
-        <input
-          id="min-age-input"
-          type="text"
-          :value="store.minimumAgeInMonths"
-          @input="updateMinimumAge(($event.target as HTMLInputElement).value)"
-          class="border border-gray-300 rounded px-2 py-1 text-lg outline-none"
-          placeholder="0"
-        />
-        <span class="text-gray-600">months</span>
-      </div>
+      <number-field
+        :model-value="minimumAgeInMonths"
+        label="Minimum Age"
+        placeholder="0"
+        caption="months"
+        @update:model-value="updateMinimumAge"
+      />
     </div>
   </div>
 </template>

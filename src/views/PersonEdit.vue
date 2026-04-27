@@ -1,49 +1,61 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { store } from '@/store'
+import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePerson, useUpdatePersonAge } from '@/composables/usePeople'
+import NumberField from '@/shared/components/NumberField.vue'
+import samuelImg from '@/assets/samuel.png'
+import type { Person } from '@/services/people'
 
 const route = useRoute()
+const router = useRouter()
+const personId = computed(() => Number(route.params.id))
 
-const person = computed(() => {
-  const id = Number(route.params.id)
-  return store.people.find((p) => p.id === id)
+const { data: person, isPending, isError } = usePerson(personId)
+const { mutateAsync: updateAge, isPending: isSaving } = useUpdatePersonAge(async () => {
+  await router.push({ name: 'people'})
 })
+const localPerson = ref<Person | null>(null)
 
-function updateAge(value: string) {
-  if (person.value) {
-    person.value.ageInHours = Number(value) || 0
-  }
+const save = async () => {
+  if (!localPerson.value) return
+  await updateAge({ id: personId.value, ageInHours: localPerson.value.ageInHours })
 }
+
+const handleUpdateAge = (ageInHours: number | undefined) => {
+  if (!localPerson.value) return
+  localPerson.value.ageInHours = ageInHours ?? 0
+}
+
+watch(person, (newPerson) => {
+  if (newPerson) {
+    localPerson.value = { ...newPerson }
+  }
+}, { immediate: true })
 </script>
 
 <template>
-  <div v-if="person" class="flex flex-col gap-4">
+  <div v-if="isPending" class="text-gray-400 text-sm">Loading...</div>
+  <div v-else-if="isError" class="text-red-500 text-sm">Failed to load person</div>
+  <div v-else-if="localPerson" class="flex flex-col gap-4">
     <router-link to="/" class="text-violet-600 hover:underline text-sm">&larr; Back</router-link>
-
-    <div class="flex items-center gap-3">
-      <img
-        src="/img.png"
-        :alt="person.name"
-        class="w-14 h-14 rounded-full border-2 border-violet-500 object-cover"
-      />
-      <div>
-        <label for="hours-input" class="block text-sm font-bold tracking-wide text-gray-700">
-          {{ person.name.toUpperCase() }} IS
-        </label>
-        <div class="flex items-center gap-2">
-          <input
-            id="hours-input"
-            type="text"
-            :value="person.ageInHours"
-            @input="updateAge(($event.target as HTMLInputElement).value)"
-            class="border border-gray-300 rounded px-2 py-1 text-lg outline-none"
-            placeholder="0"
-          />
-          <span class="text-gray-600">hours old</span>
-        </div>
-      </div>
-    </div>
+    <number-field
+      :model-value="localPerson.ageInHours"
+      :label="localPerson.name"
+      placeholder="7"
+      caption="hours old"
+      :avatar="{ src: samuelImg, alt: 'Person\'s avatar' }"
+      @update:model-value="handleUpdateAge"
+    />
+    <button
+      class="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+      :class="isSaving
+        ? 'bg-violet-300 text-white cursor-not-allowed'
+        : 'bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800'"
+      :disabled="isSaving"
+      @click="save"
+    >
+      {{ isSaving ? 'Saving...' : 'Save' }}
+    </button>
   </div>
 
   <div v-else>

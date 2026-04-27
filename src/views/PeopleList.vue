@@ -1,20 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { store } from '@/store'
+import { usePeople } from '@/composables/usePeople'
 
-const peopleWithYears = computed(() => {
-  return store.people.map((person) => ({
+const { data: people, isPending, isError } = usePeople()
+
+const peopleWithYears = computed(() =>
+  (people.value ?? []).map((person) => ({
     ...person,
     ageInYears: Math.floor(person.ageInHours / 8760),
-  }))
-})
+  })),
+)
 </script>
 
 <template>
   <div class="flex flex-col gap-4">
     <h1 class="text-xl font-bold text-gray-700">People</h1>
 
-    <div class="flex flex-col gap-3">
+    <div v-if="isPending" class="text-gray-400 text-sm">Loading...</div>
+    <div v-else-if="isError" class="text-red-500 text-sm">Failed to load people</div>
+    <div v-else class="flex flex-col gap-3">
       <router-link
         v-for="person in peopleWithYears"
         :key="person.id"

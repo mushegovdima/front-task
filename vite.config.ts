@@ -6,15 +6,27 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    vueDevTools(),
+    // DevTools only in development
+    mode === 'development' && vueDevTools(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-})
+  build: {
+    rollupOptions: {
+      output: {
+        // split libs to better caching
+        manualChunks: {
+          vue: ['vue', 'vue-router', 'pinia'],
+          query: ['@tanstack/vue-query'],
+        },
+      },
+    },
+  },
+}))
