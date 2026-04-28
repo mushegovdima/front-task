@@ -5,20 +5,22 @@ import { usePerson, useUpdatePersonAge } from '@/composables/usePeople'
 import NumberField from '@/shared/components/NumberField.vue'
 import samuelImg from '@/assets/samuel.png'
 import type { Person } from '@/services/people'
+import Avatar from '@/shared/components/Avatar.vue'
 
 const route = useRoute()
 const router = useRouter()
 const personId = computed(() => Number(route.params.id))
 
 const { data: person, isPending, isError } = usePerson(personId)
-const { mutateAsync: updateAge, isPending: isSaving } = useUpdatePersonAge(async () => {
-  await router.push({ name: 'people'})
-})
+const { mutate: updateAge, isPending: isSaving, error: saveError } = useUpdatePersonAge()
 const localPerson = ref<Person | null>(null)
 
-const save = async () => {
+const save = () => {
   if (!localPerson.value) return
-  await updateAge({ id: personId.value, ageInHours: localPerson.value.ageInHours })
+  updateAge(
+    { id: personId.value, ageInHours: localPerson.value.ageInHours },
+    { onSuccess: () => { router.push({ name: 'people' }) }}
+  )
 }
 
 const handleUpdateAge = (ageInHours: number | undefined) => {
@@ -43,11 +45,20 @@ watch(person, (newPerson) => {
       :label="localPerson.name"
       placeholder="7"
       caption="hours old"
-      :avatar="{ src: samuelImg, alt: 'Person\'s avatar' }"
       @update:model-value="handleUpdateAge"
-    />
+    >
+      <template #prepend="{ isFocused }">
+        <avatar
+          :src="samuelImg"
+          :alt="localPerson.name"
+          :size="80"
+          :highlighted="isFocused"
+        />
+      </template>
+
+    </number-field>
     <button
-      class="px-6 py-2 rounded-lg text-sm font-medium transition-colors"
+      class="px-6 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer"
       :class="isSaving
         ? 'bg-violet-300 text-white cursor-not-allowed'
         : 'bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800'"
@@ -56,6 +67,7 @@ watch(person, (newPerson) => {
     >
       {{ isSaving ? 'Saving...' : 'Save' }}
     </button>
+    <p v-if="saveError" class="text-red-500 text-sm">{{ saveError.message }}</p>
   </div>
 
   <div v-else>

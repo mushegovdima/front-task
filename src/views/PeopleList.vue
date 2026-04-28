@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePeople } from '@/composables/usePeople'
+import Avatar from '@/shared/components/Avatar.vue'
 
 const { data: people, isPending, isError } = usePeople()
 
@@ -25,11 +26,7 @@ const peopleWithYears = computed(() =>
         :to="`/person/${person.id}`"
         class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200 hover:border-violet-500"
       >
-        <img
-          src="/img.png"
-          :alt="person.name"
-          class="w-10 h-10 rounded-full border-2 border-violet-500 object-cover"
-        />
+        <Avatar src="/img.png" :alt="person.name" :size="40" />
         <div>
           <div class="font-bold text-gray-700">{{ person.name }}</div>
           <div class="text-gray-600">{{ person.ageInYears }} years old</div>

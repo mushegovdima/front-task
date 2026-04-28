@@ -1,2 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Koulen&family=Inter:wght@400;500&display=swap');
 @import 'tailwindcss';
+
+:root {
+  --color-dark: #1E0E4C;
+  --color-primary: #3D06D7;
+  --color-primary-light: #906FEE;
+  --color-border: #CFCADF;
+  --color-border-hover: #AA9DCE;
+}
